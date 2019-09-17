@@ -30,7 +30,44 @@ class Fbf_Rsp_Generator_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
-
+        //Install the logging database
+        self::db_install();
 	}
+
+    private static function db_install()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+        $table_name2 = $wpdb->prefix . 'fbf_rsp_rule_items';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+        $sql = "CREATE TABLE $table_name (
+          id mediumint(9) NOT NULL AUTO_INCREMENT,
+          sort_order int(4) NOT NULL DEFAULT 0,
+          created datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+          is_pc boolean,
+          PRIMARY KEY  (id)
+        ) $charset_collate;";
+        //dbDelta($sql);
+
+        $sql2 = "CREATE TABLE $table_name2 (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            rule_id mediumint(9) NOT NULL,
+            taxonomy varchar(20) NOT NULL,
+            term varchar(60) NOT NULL,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+        dbDelta([$sql, $sql2]);
+
+        $wpdb->query("ALTER TABLE $table_name2 ADD FOREIGN KEY (rule_id) REFERENCES  $table_name(id) ON DELETE CASCADE");
+
+        //FOREIGN KEY (rule_id) REFERENCES $table_name(id) ON CASCADE DELETE
+
+        add_option('fbf_rsp_generator_db_version', FBF_RSP_GENERATOR_DB_VERSION);
+//        echo $wpdb->last_error;
+//        die();
+    }
 
 }

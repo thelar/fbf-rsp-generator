@@ -100,4 +100,29 @@ class Fbf_Rsp_Generator_Admin {
 
 	}
 
+	/**
+     * Register menu page
+     *
+     * @since 1.0.0
+     */
+    public function add_menu_page()
+    {
+        $this->plugin_screen_hook_sufix = add_menu_page(
+            __( 'RSP Rules Generator', 'fbf-rsp-generator' ),
+            __( 'RSP Generator', 'fbf-rsp-generator' ),
+            'manage_options',
+            $this->plugin_name,
+            [$this, 'display_options_page'],
+            'dashicons-admin-tools'
+        );
+	}
+
+    /**
+     * Render the options page for plugin
+     *
+     * @since  1.0.0
+     */
+    public function display_options_page() {
+        include_once 'partials/fbf-rsp-generator-admin-display.php';
+    }
 }
