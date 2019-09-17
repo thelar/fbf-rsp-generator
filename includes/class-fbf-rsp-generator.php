@@ -156,7 +156,10 @@ class Fbf_Rsp_Generator {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'register_settings' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
+        $this->loader->add_action( 'admin_post_fbf_rsp_generator_add_rule', $plugin_admin, 'fbf_rsp_generator_add_rule' );
+        $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_rsp_generator_admin_notices');
 
 	}
 

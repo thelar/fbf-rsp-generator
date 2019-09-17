@@ -40,6 +40,15 @@ class Fbf_Rsp_Generator_Admin {
 	 */
 	private $version;
 
+    /**
+     * The options name to be used in this plugin
+     *
+     * @since  	1.0.0
+     * @access 	private
+     * @var  	string 		$option_name 	Option name of this plugin
+     */
+    private $option_name = 'fbf_rsp_generator';
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -118,11 +127,101 @@ class Fbf_Rsp_Generator_Admin {
 	}
 
     /**
+     * Register settings page
+     */
+    public function register_settings()
+    {
+        // Add a General section
+        add_settings_section(
+            $this->option_name . '_general',
+            __( 'General', 'fbf-rsp-generator' ),
+            [$this, $this->option_name . '_general_cb'],
+            $this->plugin_name
+        );
+        add_settings_field(
+            $this->option_name . '_min_stock',
+            __( 'Minimum Stock', 'fbf-rsp-generator' ),
+            [$this, $this->option_name . '_min_stock_cb'],
+            $this->plugin_name,
+            $this->option_name . '_general',
+            ['label_for' => $this->option_name . '_min_stock']
+        );
+        register_setting( $this->plugin_name, $this->option_name . '_min_stock', [$this, 'fbf_rsp_generator_validate_min_stock'] );
+    }
+
+    public function fbf_rsp_generator_validate_min_stock($input)
+    {
+        $option = get_option($this->option_name . '_min_stock');
+        $validated = sanitize_text_field($input);
+        if($validated !== $input){
+            $type = 'error';
+            $message = __('Input was not valid', 'fbf-rsp-generator');
+            $validated = $option;
+        }else{
+            $validated = intval($validated);
+            if(!$validated){
+                $type = 'error';
+                $message = __('Input was not a number', 'fbf-rsp-generator');
+                $validated = $option;
+            }else{
+                $type = 'updated';
+                $message = __('Settings updated', 'fbf-rsp-generator');
+            }
+        }
+        add_settings_error(
+            $this->option_name . '_min_stock',
+            esc_attr('settings_updated'),
+            $message,
+            $type
+        );
+        return $validated;
+    }
+
+    /**
+     * Render the text for the general section
+     *
+     * @since  1.0.0
+     */
+    public function fbf_rsp_generator_general_cb() {
+        echo '<p>' . __( 'Please change the settings accordingly.', 'fbf-rsp-generator' ) . '</p>';
+    }
+
+    /**
+     * Render the file name input for this plugin
+     *
+     * @since  1.0.9
+     */
+    public function fbf_rsp_generator_min_stock_cb() {
+        $min_stock = get_option( $this->option_name . '_min_stock' );
+        echo '<input type="text" name="' . $this->option_name . '_min_stock' . '" id="' . $this->option_name . '_file' . '" value="' . $min_stock . '"> ';
+    }
+
+    /**
      * Render the options page for plugin
      *
      * @since  1.0.0
      */
     public function display_options_page() {
         include_once 'partials/fbf-rsp-generator-admin-display.php';
+    }
+
+    /**
+     * Add a rule
+     */
+    public function fbf_rsp_generator_add_rule()
+    {
+        wp_redirect(get_admin_url() . 'admin.php?page=' . $this->plugin_name . '&fbf_rsp_status=error&fbf_rsp_message=lskjfsdkf');
+    }
+
+    /**
+     * Admin notices
+     */
+    public function fbf_rsp_generator_admin_notices()
+    {
+        if(isset($_REQUEST['fbf_rsp_status'])) {
+            printf('<div class="notice notice-%s is-dismissible">', $_REQUEST['fbf_rsp_status']);
+            printf('<p>%s</p>', $_REQUEST['fbf_rsp_message']);
+            echo '</div>';
+        }
     }
 }

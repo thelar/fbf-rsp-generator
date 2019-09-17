@@ -46,7 +46,9 @@ class Fbf_Rsp_Generator_Activator {
         $sql = "CREATE TABLE $table_name (
           id mediumint(9) NOT NULL AUTO_INCREMENT,
           sort_order int(4) NOT NULL DEFAULT 0,
+          name varchar(30) NOT NULL,
           created datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+          amount float(2,2) NOT NULL,
           is_pc boolean,
           PRIMARY KEY  (id)
         ) $charset_collate;";
@@ -61,13 +63,9 @@ class Fbf_Rsp_Generator_Activator {
         ) $charset_collate;";
         dbDelta([$sql, $sql2]);
 
-        $wpdb->query("ALTER TABLE $table_name2 ADD FOREIGN KEY (rule_id) REFERENCES  $table_name(id) ON DELETE CASCADE");
-
-        //FOREIGN KEY (rule_id) REFERENCES $table_name(id) ON CASCADE DELETE
+        $wpdb->query("ALTER TABLE $table_name2 ADD FOREIGN KEY (rule_id) REFERENCES  $table_name(id) ON DELETE CASCADE"); //Add the foreign key constraint via wpdb because dbdelta does not support it!!!
 
         add_option('fbf_rsp_generator_db_version', FBF_RSP_GENERATOR_DB_VERSION);
-//        echo $wpdb->last_error;
-//        die();
     }
 
 }

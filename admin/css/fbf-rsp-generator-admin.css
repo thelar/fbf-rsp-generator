@@ -2,3 +2,8 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+#fbf-rsp-generator-add-rule-table td,
+#fbf-rsp-generator-add-rule-table th {
+    padding: 5px 20px 5px 0;
+}
