@@ -27,9 +27,9 @@
 
     <hr/>
 
-    <h2>Add rules:</h2>
+    <h2>Add new rule</h2>
 
-    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="margin-bottom: 25px;">
         <input type="hidden" name="action" value="fbf_rsp_generator_add_rule">
         <table class="form-table" id="fbf-rsp-generator-add-rule-table">
             <tbody>
@@ -49,6 +49,7 @@
                         <input type="text" name="fbf_rsp_generator_rule_amount" id="fbf_rsp_generator_rule_amount" value="">
                     </td>
                 </tr>
+                <?php echo $this->display_selects($this->taxonomies); ?>
             </tbody>
         </table>
         <input type="submit" value="Add rule" class="button-primary">
@@ -56,12 +57,13 @@
 
     <hr/>
 
-    <h2>Rules</h2>
+    <h2>Current rules</h2>
 
     <table class="widefat" id="fbf-rsp-generator-rule-table">
         <thead>
             <tr>
                 <th class="row-title"><?php esc_attr_e( 'Rule name', $this->plugin_name ); ?></th>
+                <?php echo $this->print_taxonomy_headings(); ?>
                 <th><?php esc_attr_e( 'Amount (%)', $this->plugin_name ); ?></th>
                 <th>Delete</th>
             </tr>

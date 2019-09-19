@@ -30,3 +30,6 @@ button.no-styles:hover {
     cursor: move;
     background: #ddd;
 }
+.fbf_rsp_generator_tax_rule_select {
+    min-width: 192px;
+}

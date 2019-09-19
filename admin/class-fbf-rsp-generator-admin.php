@@ -49,6 +49,15 @@ class Fbf_Rsp_Generator_Admin {
      */
     private $option_name = 'fbf_rsp_generator';
 
+    /**
+     * The taxonomies for which we allow rules to be created
+     *
+     * @since 1.0.0
+     * @access private
+     * @var array
+     */
+    private $taxonomies = ['pa_tyre-type', 'pa_tyre-size', 'pa_tyre-profile', 'pa_tyre-width', 'pa_brand-name', 'pa_model-name'];
+
 	/**
 	 * Initialize the class and set its properties.
 	 *
@@ -221,10 +230,19 @@ class Fbf_Rsp_Generator_Admin {
         global $wpdb;
         $is_rule_name_valid = $this->is_rule_name_valid($_REQUEST[$this->option_name . '_rule_name']);
         $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount']);
+        foreach($this->taxonomies as $tax){
+            $val = $_REQUEST[$this->option_name . '_rule_tax_' . $tax];
+            if(isset($val) && !empty($val)){
+                $rules[] = [
+                    'taxonomy' => $tax,
+                    'term' => $_REQUEST[$this->option_name . '_rule_tax_' . $tax]
+                ];
+            }
+        }
         if($is_rule_name_valid->is_valid && $is_rule_amount_valid->is_valid){
             //Here if valid
             $status = 'success';
-            $message = urlencode('<strong>Rule added</strong> - at least it will be when code is written');
+            $message = urlencode('<strong>Rule added</strong>');
         }else{
             $status = 'error';
             $message = sprintf('%s%s%s', !$is_rule_name_valid->is_valid?$is_rule_name_valid->message:'', !$is_rule_name_valid->is_valid&&!$is_rule_amount_valid->is_valid?urlencode('<br>'):'', !$is_rule_amount_valid->is_valid?$is_rule_amount_valid->message:'');
@@ -232,11 +250,12 @@ class Fbf_Rsp_Generator_Admin {
 
         if($status=='success'){
             $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+            $items_table_name = $wpdb->prefix . 'fbf_rsp_rule_items';
             $sql = $wpdb->get_row("SELECT MAX(sort_order) AS so FROM $table_name");
             if($sql!==false){
                 $so = $sql->so;
 
-                $insert_id = $wpdb->insert(
+                $insert = $wpdb->insert(
                     $table_name,
                     [
                         'name' => $is_rule_name_valid->value,
@@ -245,9 +264,28 @@ class Fbf_Rsp_Generator_Admin {
                         'sort_order' => $so + 1
                     ]
                 );
-                if($insert_id===false){
+                if($insert===false){
                     $status = 'error';
                     $message = urlencode('<strong>Database errors</strong> - rule could not be inserted');
+                }else{
+                    $insert_id = $wpdb->insert_id;
+                    if(isset($rules) && !empty($rules)){
+                        foreach($rules as $rule){
+                            $insert_item_id = $wpdb->insert(
+                                $items_table_name,
+                                [
+                                    'rule_id' => $insert_id,
+                                    'taxonomy' => $rule['taxonomy'],
+                                    'term' => $rule['term']
+                                ]
+                            );
+                            if($insert_item_id===false){
+                                $status = 'error';
+                                $message = urlencode('<strong>Database errors</strong> - rule item could not be inserted');
+                                break;
+                            }
+                        }
+                    }
                 }
             }else{
                 $status = 'error';
@@ -338,13 +376,34 @@ class Fbf_Rsp_Generator_Admin {
     {
         global $wpdb;
         $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+        $item_table_name = $wpdb->prefix . 'fbf_rsp_rule_items';
         $sql = "SELECT * FROM $table_name ORDER BY sort_order";
         $rows = $wpdb->get_results($sql);
         $html = "";
         if($rows){
             foreach($rows as $row){
+                //Get items here
+                $item_sql = "SELECT * from $item_table_name WHERE rule_id = '$row->id'";
+                $items = $wpdb->get_results($item_sql);
+                $items_a = [];
+                if($items!==false && !empty($items)){
+                    foreach($items as $item){
+                        $items_a[$item->taxonomy] = $item->term;
+                    }
+                }
+
+
                 $html.= sprintf('<tr data-id="%s">', $row->id);
                 $html.= sprintf('<td class="row-title">%s</td>', esc_attr($row->name));
+                foreach($this->taxonomies as $taxonomy){
+                    if(isset($items_a[$taxonomy])){
+                        $term = get_term_by('slug', $items_a[$taxonomy], $taxonomy);
+                        $html.= sprintf('<td>%s</td>', $term->name);
+                    }else{
+                        $html.= '<td>Any</td>';
+                    }
+                }
+
                 $html.= sprintf('<td>%s</td>', esc_attr($row->amount));
                 $html.= sprintf('<td><form action="%s" method="post" class="fbf-rsp-generator-delete-rule-form"><input type="hidden" name="action" value="fbf_rsp_generator_delete_rule"/><input type="hidden" name="%s" value="%s"/><button type="submit" class="no-styles fbf-rsp-generator-delete-rule">Delete</button></form></td>', admin_url('admin-post.php'), $this->option_name . '_rule_id', $row->id);
                 $html.= '</tr>';
@@ -389,5 +448,37 @@ class Fbf_Rsp_Generator_Admin {
         }
         echo json_encode($resp);
         die();
+    }
+
+    /**
+     * Display select dropdowns
+     */
+    private function display_selects(Array $attributes)
+    {
+        $html = "";
+        foreach($attributes as $attribute){
+            $taxonomy = get_taxonomy($attribute);
+            $html.= sprintf('<tr><th scope="row"><label for="%1$s_rule_tax_%2$s">%3$s</label></th><td><select name="%1$s_rule_tax_%2$s" id="%1$s_rule_tax_%2$s" class="%1$s_tax_rule_select">', $this->option_name, $attribute, $taxonomy->label);
+            $terms = get_terms([
+                'taxonomy' => $attribute,
+                'hide_empty' => false,
+            ]);
+            $html.= '<option value="">Any</option>';
+            foreach($terms as $term){
+                $html.= sprintf('<option value="%1$s">%2$s</option>', $term->slug, $term->name);
+            }
+            $html.= '</select></td></tr>';
+        }
+        return $html;
+    }
+
+    private function print_taxonomy_headings()
+    {
+        $html = '';
+        foreach($this->taxonomies as $taxonomy){
+            $taxonomy = get_taxonomy($taxonomy);
+            $html.= sprintf('<th>%s</th>', $taxonomy->label);
+        }
+        return $html;
     }
 }
