@@ -54,4 +54,21 @@
         <input type="submit" value="Add rule" class="button-primary">
     </form>
 
+    <hr/>
+
+    <h2>Rules</h2>
+
+    <table class="widefat" id="fbf-rsp-generator-rule-table">
+        <thead>
+            <tr>
+                <th class="row-title"><?php esc_attr_e( 'Rule name', $this->plugin_name ); ?></th>
+                <th><?php esc_attr_e( 'Amount (%)', $this->plugin_name ); ?></th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php echo $this->print_rule_rows(); ?>
+        </tbody>
+    </table>
+
 </div>

@@ -2,8 +2,31 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
-
+#fbf-rsp-generator-add-rule-table {
+    margin-bottom: 20px;
+}
 #fbf-rsp-generator-add-rule-table td,
 #fbf-rsp-generator-add-rule-table th {
     padding: 5px 20px 5px 0;
+}
+button.no-styles {
+    color: rgb(0, 115, 170);
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+button.no-styles:hover {
+    text-decoration: underline;
+    color: rgb(0, 160, 210);
+}
+#fbf-rsp-generator-rule-table tr {
+    background: #fff;
+}
+#fbf-rsp-generator-rule-table tr:hover {
+    cursor: pointer;
+}
+#fbf-rsp-generator-rule-table tr.ui-sortable-helper{
+    cursor: move;
+    background: #ddd;
 }

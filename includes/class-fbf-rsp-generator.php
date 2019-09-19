@@ -160,6 +160,8 @@ class Fbf_Rsp_Generator {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'add_menu_page' );
         $this->loader->add_action( 'admin_post_fbf_rsp_generator_add_rule', $plugin_admin, 'fbf_rsp_generator_add_rule' );
         $this->loader->add_action( 'admin_notices', $plugin_admin, 'fbf_rsp_generator_admin_notices');
+        $this->loader->add_action( 'admin_post_fbf_rsp_generator_delete_rule', $plugin_admin, 'fbf_rsp_generator_delete_rule');
+        $this->loader->add_action( 'wp_ajax_sort_rule_rows', $plugin_admin, 'sort_rule_rows' );
 
 	}
 

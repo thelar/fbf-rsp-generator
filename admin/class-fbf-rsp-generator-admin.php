@@ -106,6 +106,14 @@ class Fbf_Rsp_Generator_Admin {
 		 */
 
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/fbf-rsp-generator-admin.js', array( 'jquery' ), $this->version, false );
+        wp_enqueue_script( 'jquery-ui-sortable' );
+
+        $ajax_params = array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'ajax_nonce' => wp_create_nonce($this->option_name),
+        );
+
+        wp_localize_script( $this->plugin_name, 'ajax_object', $ajax_params);
 
 	}
 
@@ -210,7 +218,140 @@ class Fbf_Rsp_Generator_Admin {
      */
     public function fbf_rsp_generator_add_rule()
     {
-        wp_redirect(get_admin_url() . 'admin.php?page=' . $this->plugin_name . '&fbf_rsp_status=error&fbf_rsp_message=lskjfsdkf');
+        global $wpdb;
+        $is_rule_name_valid = $this->is_rule_name_valid($_REQUEST[$this->option_name . '_rule_name']);
+        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount']);
+        if($is_rule_name_valid->is_valid && $is_rule_amount_valid->is_valid){
+            //Here if valid
+            $status = 'success';
+            $message = urlencode('<strong>Rule added</strong> - at least it will be when code is written');
+        }else{
+            $status = 'error';
+            $message = sprintf('%s%s%s', !$is_rule_name_valid->is_valid?$is_rule_name_valid->message:'', !$is_rule_name_valid->is_valid&&!$is_rule_amount_valid->is_valid?urlencode('<br>'):'', !$is_rule_amount_valid->is_valid?$is_rule_amount_valid->message:'');
+        }
+
+        if($status=='success'){
+            $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+            $sql = $wpdb->get_row("SELECT MAX(sort_order) AS so FROM $table_name");
+            if($sql!==false){
+                $so = $sql->so;
+
+                $insert_id = $wpdb->insert(
+                    $table_name,
+                    [
+                        'name' => $is_rule_name_valid->value,
+                        'amount' => $is_rule_amount_valid->value,
+                        'created' => current_time('mysql', 1),
+                        'sort_order' => $so + 1
+                    ]
+                );
+                if($insert_id===false){
+                    $status = 'error';
+                    $message = urlencode('<strong>Database errors</strong> - rule could not be inserted');
+                }
+            }else{
+                $status = 'error';
+                $message = urlencode('<strong>Database errors</strong> - sort order not retrieved');
+            }
+
+        }
+
+        wp_redirect(get_admin_url() . 'admin.php?page=' . $this->plugin_name . '&fbf_rsp_status=' . $status . '&fbf_rsp_message=' . $message);
+    }
+
+    /**
+     * Delete rule
+     */
+    public function fbf_rsp_generator_delete_rule()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+        $rule_id = $_REQUEST[$this->option_name . '_rule_id'];
+        $delete = $wpdb->delete(
+            $table_name,
+            [
+                'id' => $rule_id
+            ]
+        );
+        if($delete!==false){
+            $status = 'success';
+            $message = urlencode('<strong>Rule deleted</strong>');
+        }else{
+            $status = 'error';
+            $message = urlencode('<strong>Could not delete rule</strong>');
+        }
+        wp_redirect(get_admin_url() . 'admin.php?page=' . $this->plugin_name . '&fbf_rsp_status=' . $status . '&fbf_rsp_message=' . $message);
+    }
+
+    private function is_rule_name_valid($rule_name_value)
+    {
+        $validated_rule_name = sanitize_text_field($rule_name_value);
+        if($validated_rule_name!==$rule_name_value){
+            return (object)[
+                'is_valid' => false,
+                'message' => urlencode('<strong>Validation failed</strong> - please enter a valid rule name')
+            ];
+        }else{
+            if(empty($rule_name_value)){
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Name required</strong> - please enter a value for rule name')
+                ];
+            }else{
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $validated_rule_name
+                ];
+            }
+        }
+    }
+
+    private function is_rule_amount_valid($rule_amount_value)
+    {
+        $validated = sanitize_text_field($rule_amount_value);
+        if($validated!==$rule_amount_value || !is_numeric($validated) || $validated <= 0 || $validated >= 100 ){
+            return (object)[
+                'is_valid' => false,
+                'message' => urlencode('<strong>Validation failed</strong> - please enter a valid rule amount')
+            ];
+        }else{
+            if(empty($rule_amount_value)){
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Validation failed</strong> - please enter a value for rule amount')
+                ];
+            }else{
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $validated
+                ];
+            }
+        }
+    }
+
+    /**
+     * Print rule rows
+     */
+    public function print_rule_rows()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+        $sql = "SELECT * FROM $table_name ORDER BY sort_order";
+        $rows = $wpdb->get_results($sql);
+        $html = "";
+        if($rows){
+            foreach($rows as $row){
+                $html.= sprintf('<tr data-id="%s">', $row->id);
+                $html.= sprintf('<td class="row-title">%s</td>', esc_attr($row->name));
+                $html.= sprintf('<td>%s</td>', esc_attr($row->amount));
+                $html.= sprintf('<td><form action="%s" method="post" class="fbf-rsp-generator-delete-rule-form"><input type="hidden" name="action" value="fbf_rsp_generator_delete_rule"/><input type="hidden" name="%s" value="%s"/><button type="submit" class="no-styles fbf-rsp-generator-delete-rule">Delete</button></form></td>', admin_url('admin-post.php'), $this->option_name . '_rule_id', $row->id);
+                $html.= '</tr>';
+            }
+        }
+        return $html;
+
     }
 
     /**
@@ -223,5 +364,30 @@ class Fbf_Rsp_Generator_Admin {
             printf('<p>%s</p>', $_REQUEST['fbf_rsp_message']);
             echo '</div>';
         }
+    }
+
+    /**
+     * Ajax function for sorting rows
+     */
+    public function sort_rule_rows()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fbf_rsp_rules';
+        $sorted = $_POST['sorted'];
+        $resp = [];
+        for($i=0;$i<count($sorted);$i++){
+            $update = $wpdb->update(
+                $table_name,
+                [
+                    'sort_order' => $i
+                ],
+                [
+                    'id' => $sorted[$i]
+                ]
+            );
+            $resp[$sorted[$i]] = $update;
+        }
+        echo json_encode($resp);
+        die();
     }
 }
