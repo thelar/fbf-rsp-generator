@@ -64,7 +64,7 @@
             <tr>
                 <th class="row-title"><?php esc_attr_e( 'Rule name', $this->plugin_name ); ?></th>
                 <?php echo $this->print_taxonomy_headings(); ?>
-                <th><?php esc_attr_e( 'Amount (%)', $this->plugin_name ); ?></th>
+                <th style="text-align: center;"><?php esc_attr_e( 'Amount (%)', $this->plugin_name ); ?></th>
                 <th>Delete</th>
             </tr>
         </thead>

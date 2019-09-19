@@ -398,13 +398,13 @@ class Fbf_Rsp_Generator_Admin {
                 foreach($this->taxonomies as $taxonomy){
                     if(isset($items_a[$taxonomy])){
                         $term = get_term_by('slug', $items_a[$taxonomy], $taxonomy);
-                        $html.= sprintf('<td>%s</td>', $term->name);
+                        $html.= sprintf('<td style="text-align: center;">%s</td>', $term->name);
                     }else{
-                        $html.= '<td>Any</td>';
+                        $html.= '<td style="text-align: center;">Any</td>';
                     }
                 }
 
-                $html.= sprintf('<td>%s</td>', esc_attr($row->amount));
+                $html.= sprintf('<td style="text-align: center;">%s</td>', esc_attr($row->amount));
                 $html.= sprintf('<td><form action="%s" method="post" class="fbf-rsp-generator-delete-rule-form"><input type="hidden" name="action" value="fbf_rsp_generator_delete_rule"/><input type="hidden" name="%s" value="%s"/><button type="submit" class="no-styles fbf-rsp-generator-delete-rule">Delete</button></form></td>', admin_url('admin-post.php'), $this->option_name . '_rule_id', $row->id);
                 $html.= '</tr>';
             }
@@ -477,7 +477,7 @@ class Fbf_Rsp_Generator_Admin {
         $html = '';
         foreach($this->taxonomies as $taxonomy){
             $taxonomy = get_taxonomy($taxonomy);
-            $html.= sprintf('<th>%s</th>', $taxonomy->label);
+            $html.= sprintf('<th style="text-align: center;">%s</th>', $taxonomy->label);
         }
         return $html;
     }
