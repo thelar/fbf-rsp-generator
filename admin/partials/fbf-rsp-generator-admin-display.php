@@ -59,7 +59,7 @@
 
     <h2>Current rules</h2>
 
-    <table class="widefat" id="fbf-rsp-generator-rule-table">
+    <table class="widefat" id="fbf-rsp-generator-rule-table" style="margin-bottom: 25px;">
         <thead>
             <tr>
                 <th class="row-title"><?php esc_attr_e( 'Rule name', $this->plugin_name ); ?></th>
