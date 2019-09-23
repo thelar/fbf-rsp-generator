@@ -163,7 +163,16 @@ class Fbf_Rsp_Generator_Admin {
             $this->option_name . '_general',
             ['label_for' => $this->option_name . '_min_stock']
         );
+        add_settings_field(
+            $this->option_name . '_flat_fee',
+            __( 'Flat fee (£)', 'fbf-rsp-generator' ),
+            [$this, $this->option_name . '_flat_fee_cb'],
+            $this->plugin_name,
+            $this->option_name . '_general',
+            ['label_for' => $this->option_name . '_flat_fee']
+        );
         register_setting( $this->plugin_name, $this->option_name . '_min_stock', [$this, 'fbf_rsp_generator_validate_min_stock'] );
+        register_setting( $this->plugin_name, $this->option_name . '_flat_fee', [$this, 'fbf_rsp_generator_validate_flat_fee'] );
     }
 
     public function fbf_rsp_generator_validate_min_stock($input)
@@ -172,17 +181,17 @@ class Fbf_Rsp_Generator_Admin {
         $validated = sanitize_text_field($input);
         if($validated !== $input){
             $type = 'error';
-            $message = __('Input was not valid', 'fbf-rsp-generator');
+            $message = __('Min Stock was not valid', 'fbf-rsp-generator');
             $validated = $option;
         }else{
             $validated = intval($validated);
             if(!$validated){
                 $type = 'error';
-                $message = __('Input was not a number', 'fbf-rsp-generator');
+                $message = __('Min Stock was not a number', 'fbf-rsp-generator');
                 $validated = $option;
             }else{
                 $type = 'updated';
-                $message = __('Settings updated', 'fbf-rsp-generator');
+                $message = __('Min Stock updated', 'fbf-rsp-generator');
             }
         }
         add_settings_error(
@@ -194,23 +203,61 @@ class Fbf_Rsp_Generator_Admin {
         return $validated;
     }
 
+    public function fbf_rsp_generator_validate_flat_fee($input)
+    {
+        $option = get_option($this->option_name . '_flat_fee');
+        $validated = sanitize_text_field($input);
+        if($validated !== $input){
+            $type = 'error';
+            $message = __('Flat Fee was not valid', 'fbf-rsp-generator');
+            $validated = $option;
+        }else{
+            $validated = floatval($validated);
+            if(!$validated){
+                $type = 'error';
+                $message = __('Flat Fee was not a number', 'fbf-rsp-generator');
+                $validated = $option;
+            }else{
+                $type = 'updated';
+                $message = __('Flat Fee updated', 'fbf-rsp-generator');
+            }
+        }
+        add_settings_error(
+            $this->option_name . '_flat_fee',
+            esc_attr('settings_updated'),
+            $message,
+            $type
+        );
+        return number_format($validated, 2);
+    }
+
     /**
      * Render the text for the general section
      *
      * @since  1.0.0
      */
     public function fbf_rsp_generator_general_cb() {
-        echo '<p>' . __( 'Please change the settings accordingly.', 'fbf-rsp-generator' ) . '</p>';
+        echo '<p>' . __( 'Please make changes to the RSP Rules settings below. (Settings apply to Tyres only)', 'fbf-rsp-generator' ) . '</p>';
     }
 
     /**
-     * Render the file name input for this plugin
+     * Render the min stock input for this plugin
      *
-     * @since  1.0.9
+     * @since  1.0.0
      */
     public function fbf_rsp_generator_min_stock_cb() {
         $min_stock = get_option( $this->option_name . '_min_stock' );
         echo '<input type="text" name="' . $this->option_name . '_min_stock' . '" id="' . $this->option_name . '_file' . '" value="' . $min_stock . '"> ';
+    }
+
+    /**
+     * Render the flat fee input for this plugin
+     *
+     * @since  1.0.0
+     */
+    public function fbf_rsp_generator_flat_fee_cb() {
+        $flat_fee = get_option( $this->option_name . '_flat_fee' );
+        echo '<input type="text" name="' . $this->option_name . '_flat_fee' . '" id="' . $this->option_name . '_file' . '" value="' . $flat_fee . '"> ';
     }
 
     /**
