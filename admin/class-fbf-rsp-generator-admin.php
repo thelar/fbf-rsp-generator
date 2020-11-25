@@ -537,7 +537,7 @@ class Fbf_Rsp_Generator_Admin {
         $rules_table = $wpdb->prefix . 'fbf_rsp_rules';
         $rule_items_table = $wpdb->prefix . 'fbf_rsp_rule_items';
 
-        $sql = "SELECT name, amount, taxonomy, term FROM $rules_table as rules LEFT JOIN $rule_items_table AS items ON rules.id = items.rule_id";
+        $sql = "SELECT name, amount, taxonomy, term FROM $rules_table as rules LEFT JOIN $rule_items_table AS items ON rules.id = items.rule_id ORDER BY sort_order ASC";
         //$sql = "SELECT * FROM $rules_table";
         $rules_select = $wpdb->get_results($sql);
         if(!empty($rules_select)){
