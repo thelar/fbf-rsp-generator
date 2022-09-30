@@ -171,6 +171,14 @@ class Fbf_Rsp_Generator_Admin {
             $this->option_name . '_general',
             ['label_for' => $this->option_name . '_flat_fee']
         );
+        add_settings_field(
+            $this->option_name . '_fitting_cost',
+            __( 'Fitting cost (£)', 'fbf-rsp-generator' ),
+            [$this, $this->option_name . '_fitting_cost_cb'],
+            $this->plugin_name,
+            $this->option_name . '_general',
+            ['label_for' => $this->option_name . '_fitting_cost']
+        );
         register_setting( $this->plugin_name, $this->option_name . '_min_stock', [$this, 'fbf_rsp_generator_validate_min_stock'] );
         register_setting( $this->plugin_name, $this->option_name . '_flat_fee', [$this, 'fbf_rsp_generator_validate_flat_fee'] );
     }
@@ -258,6 +266,16 @@ class Fbf_Rsp_Generator_Admin {
     public function fbf_rsp_generator_flat_fee_cb() {
         $flat_fee = get_option( $this->option_name . '_flat_fee' );
         echo '<input type="text" name="' . $this->option_name . '_flat_fee' . '" id="' . $this->option_name . '_file' . '" value="' . $flat_fee . '"> ';
+    }
+
+    /**
+     * Render the flat fee input for this plugin
+     *
+     * @since  1.0.0
+     */
+    public function fbf_rsp_generator_fitting_cost_cb() {
+        $fitting_cost = get_option( $this->option_name . '_fitting_cost' );
+        echo '<input type="text" name="' . $this->option_name . '_fitting_cost' . '" id="' . $this->option_name . '_file' . '" value="' . $fitting_cost . '"> ';
     }
 
     /**
