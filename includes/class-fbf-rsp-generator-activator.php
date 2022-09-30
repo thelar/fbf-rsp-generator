@@ -47,8 +47,9 @@ class Fbf_Rsp_Generator_Activator {
           id mediumint(9) NOT NULL AUTO_INCREMENT,
           sort_order int(4) NOT NULL DEFAULT 0,
           name varchar(30) NOT NULL,
-          created datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-          amount float(4,2) NOT NULL,
+          created datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,  
+          price_match boolean NOT NULL DEFAULT 0,
+          amount float(4,2) NULL,
           is_pc boolean,
           PRIMARY KEY  (id)
         ) $charset_collate;";

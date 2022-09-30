@@ -45,6 +45,18 @@
 			return ui;
 		};
 
+		$('#fbf_rsp_generator_price_match').bind('change', function(){
+			console.log('price match change');
+			console.log($(this).is(':checked'));
+			if($(this).is(':checked')){
+				$('#fbf_rsp_generator_rule_amount').prop('disabled', true);
+				$('#fbf_rsp_generator_rule_amount').val('');
+			}else{
+				$('#fbf_rsp_generator_rule_amount').prop('disabled', false);
+			}
+			return false;
+		});
+
 		$('#fbf-rsp-generator-rule-table tbody').sortable({
 			helper: fixHelper,
 			update: function(event, ui) {

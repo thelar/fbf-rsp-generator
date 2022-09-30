@@ -43,6 +43,15 @@
                 </tr>
                 <tr>
                     <th scope="row">
+                        <label for="fbf_rsp_generator_price_match">Price match</label>
+                    </th>
+                    <td>
+                        <input type="checkbox" value="yes" id="fbf_rsp_generator_price_match" name="fbf_rsp_generator_price_match"/>
+                        <label for="fbf_rsp_generator_price_match">Tick to price match against lowest competitor (Competitor Monitor)</label>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
                         <label for="fbf_rsp_generator_rule_amount">Amount (%)</label>
                     </th>
                     <td>
@@ -64,6 +73,7 @@
             <tr>
                 <th class="row-title"><?php esc_attr_e( 'Rule name', $this->plugin_name ); ?></th>
                 <?php echo $this->print_taxonomy_headings(); ?>
+                <th style="text-align: center;"><?php esc_attr_e( 'Price Match', $this->plugin_name ); ?></th>
                 <th style="text-align: center;"><?php esc_attr_e( 'Amount (%)', $this->plugin_name ); ?></th>
                 <th>Delete</th>
             </tr>

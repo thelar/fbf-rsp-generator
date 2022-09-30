@@ -181,6 +181,7 @@ class Fbf_Rsp_Generator_Admin {
         );
         register_setting( $this->plugin_name, $this->option_name . '_min_stock', [$this, 'fbf_rsp_generator_validate_min_stock'] );
         register_setting( $this->plugin_name, $this->option_name . '_flat_fee', [$this, 'fbf_rsp_generator_validate_flat_fee'] );
+        register_setting( $this->plugin_name, $this->option_name . '_fitting_cost', [$this, 'fbf_rsp_generator_validate_fitting_cost'] );
     }
 
     public function fbf_rsp_generator_validate_min_stock($input)
@@ -232,6 +233,34 @@ class Fbf_Rsp_Generator_Admin {
         }
         add_settings_error(
             $this->option_name . '_flat_fee',
+            esc_attr('settings_updated'),
+            $message,
+            $type
+        );
+        return number_format($validated, 2);
+    }
+
+    public function fbf_rsp_generator_validate_fitting_cost($input)
+    {
+        $option = get_option($this->option_name . '_fitting_cost');
+        $validated = sanitize_text_field($input);
+        if($validated !== $input){
+            $type = 'error';
+            $message = __('Fitting cost was not valid', 'fbf-rsp-generator');
+            $validated = $option;
+        }else{
+            $validated = floatval($validated);
+            if(!$validated){
+                $type = 'error';
+                $message = __('Fitting cost was not a number', 'fbf-rsp-generator');
+                $validated = $option;
+            }else{
+                $type = 'updated';
+                $message = __('Fitting cost updated', 'fbf-rsp-generator');
+            }
+        }
+        add_settings_error(
+            $this->option_name . '_fitting_cost',
             esc_attr('settings_updated'),
             $message,
             $type
@@ -294,7 +323,7 @@ class Fbf_Rsp_Generator_Admin {
     {
         global $wpdb;
         $is_rule_name_valid = $this->is_rule_name_valid($_REQUEST[$this->option_name . '_rule_name']);
-        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount']);
+        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount'], $_REQUEST[$this->option_name . '_price_match']);
         foreach($this->taxonomies as $tax){
             $val = $_REQUEST[$this->option_name . '_rule_tax_' . $tax];
             if(isset($val) && !empty($val)){
@@ -320,14 +349,23 @@ class Fbf_Rsp_Generator_Admin {
             if($sql!==false){
                 $so = $sql->so;
 
+                $insert_array = [
+                    'name' => $is_rule_name_valid->value,
+                    'created' => current_time('mysql', 1),
+                    'sort_order' => $so + 1
+                ];
+                if($is_rule_amount_valid->value==='yes'){
+                    // It's a price match
+                    $insert_array['amount'] = null;
+                    $insert_array['price_match'] = 1;
+                }else{
+                    $insert_array['amount'] = $is_rule_amount_valid->value;
+                    $insert_array['price_match'] = 0;
+                }
+
                 $insert = $wpdb->insert(
                     $table_name,
-                    [
-                        'name' => $is_rule_name_valid->value,
-                        'amount' => $is_rule_amount_valid->value,
-                        'created' => current_time('mysql', 1),
-                        'sort_order' => $so + 1
-                    ]
+                    $insert_array
                 );
                 if($insert===false){
                     $status = 'error';
@@ -410,14 +448,22 @@ class Fbf_Rsp_Generator_Admin {
         }
     }
 
-    private function is_rule_amount_valid($rule_amount_value)
+    private function is_rule_amount_valid($rule_amount_value, $price_match)
     {
         $validated = sanitize_text_field($rule_amount_value);
         if($validated!==$rule_amount_value || !is_numeric($validated) || $validated <= 0 || $validated >= 100 ){
-            return (object)[
-                'is_valid' => false,
-                'message' => urlencode('<strong>Validation failed</strong> - please enter a valid rule amount')
-            ];
+            if($price_match==='yes'){
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $price_match
+                ];
+            }else{
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Validation failed</strong> - please enter a valid rule amount')
+                ];
+            }
         }else{
             if(empty($rule_amount_value)){
                 return (object)[
@@ -469,7 +515,8 @@ class Fbf_Rsp_Generator_Admin {
                     }
                 }
 
-                $html.= sprintf('<td style="text-align: center;">%s</td>', esc_attr($row->amount));
+                $html.= sprintf('<td style="text-align: center;">%s</td>', $row->price_match?'Yes':'-');
+                $html.= sprintf('<td style="text-align: center;">%s</td>', !empty($row->amount)?esc_attr($row->amount):'-');
                 $html.= sprintf('<td><form action="%s" method="post" class="fbf-rsp-generator-delete-rule-form"><input type="hidden" name="action" value="fbf_rsp_generator_delete_rule"/><input type="hidden" name="%s" value="%s"/><button type="submit" class="no-styles fbf-rsp-generator-delete-rule">Delete</button></form></td>', admin_url('admin-post.php'), $this->option_name . '_rule_id', $row->id);
                 $html.= '</tr>';
             }
