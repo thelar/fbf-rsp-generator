@@ -602,12 +602,13 @@ class Fbf_Rsp_Generator_Admin {
         $rules_table = $wpdb->prefix . 'fbf_rsp_rules';
         $rule_items_table = $wpdb->prefix . 'fbf_rsp_rule_items';
 
-        $sql = "SELECT name, amount, taxonomy, term FROM $rules_table as rules LEFT JOIN $rule_items_table AS items ON rules.id = items.rule_id ORDER BY sort_order ASC";
+        $sql = "SELECT name, price_match, amount, taxonomy, term FROM $rules_table as rules LEFT JOIN $rule_items_table AS items ON rules.id = items.rule_id ORDER BY sort_order ASC";
         //$sql = "SELECT * FROM $rules_table";
         $rules_select = $wpdb->get_results($sql);
         if(!empty($rules_select)){
             foreach ($rules_select as $row) {
                 $rules[$row->name]['amount'] = $row->amount;
+                $rules[$row->name]['price_match'] = $row->price_match;
                 if(isset($row->term)){
                     $rules[$row->name]['rules'][$row->taxonomy] = $row->term;
                 }else{
