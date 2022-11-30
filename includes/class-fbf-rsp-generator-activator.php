@@ -49,8 +49,9 @@ class Fbf_Rsp_Generator_Activator {
           name varchar(30) NOT NULL,
           created datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,  
           price_match boolean NOT NULL DEFAULT 0,
+          price_match_addition float(4,2) NULL,
           amount float(4,2) NULL,
-          is_pc boolean,
+          is_pc boolean NOT NULL DEFAULT 1,
           PRIMARY KEY  (id)
         ) $charset_collate;";
         //dbDelta($sql);

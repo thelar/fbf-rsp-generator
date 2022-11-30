@@ -50,9 +50,13 @@
 			console.log($(this).is(':checked'));
 			if($(this).is(':checked')){
 				$('#fbf_rsp_generator_rule_amount').prop('disabled', true);
+				$('#fbf_rsp_generator_rule_amount_pound').prop('disabled', true);
 				$('#fbf_rsp_generator_rule_amount').val('');
+				$('#fbf_rsp_generator_price_match_addition_row').show();
 			}else{
 				$('#fbf_rsp_generator_rule_amount').prop('disabled', false);
+				$('#fbf_rsp_generator_rule_amount_pound').prop('disabled', false);
+				$('#fbf_rsp_generator_price_match_addition_row').hide();
 			}
 			return false;
 		});

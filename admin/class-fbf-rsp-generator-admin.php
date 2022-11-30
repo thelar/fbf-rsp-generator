@@ -323,7 +323,7 @@ class Fbf_Rsp_Generator_Admin {
     {
         global $wpdb;
         $is_rule_name_valid = $this->is_rule_name_valid($_REQUEST[$this->option_name . '_rule_name']);
-        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount'], $_REQUEST[$this->option_name . '_price_match']);
+        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount'], $_REQUEST[$this->option_name . '_rule_amount_pound'], $_REQUEST[$this->option_name . '_price_match'], $_REQUEST[$this->option_name . '_price_match_addition']);
         foreach($this->taxonomies as $tax){
             $val = $_REQUEST[$this->option_name . '_rule_tax_' . $tax];
             if(isset($val) && !empty($val)){
@@ -358,9 +358,19 @@ class Fbf_Rsp_Generator_Admin {
                     // It's a price match
                     $insert_array['amount'] = null;
                     $insert_array['price_match'] = 1;
+                    if($_REQUEST[$this->option_name . '_price_match_addition']){
+                        $insert_array['price_match_addition'] = sanitize_text_field($_REQUEST[$this->option_name . '_price_match_addition']);
+                    }
                 }else{
-                    $insert_array['amount'] = $is_rule_amount_valid->value;
-                    $insert_array['price_match'] = 0;
+                    if($_REQUEST[$this->option_name . '_rule_amount']){
+                        $insert_array['amount'] = sanitize_text_field($_REQUEST[$this->option_name . '_rule_amount']);
+                        $insert_array['is_pc'] = 1;
+                    }else if($_REQUEST[$this->option_name . '_rule_amount_pound']){
+                        $insert_array['amount'] = sanitize_text_field($_REQUEST[$this->option_name . '_rule_amount_pound']);
+                        $insert_array['is_pc'] = 0;
+                    }
+                    /*$insert_array['amount'] = $is_rule_amount_valid->value;
+                    $insert_array['price_match'] = 0;*/
                 }
 
                 $insert = $wpdb->insert(
@@ -448,10 +458,68 @@ class Fbf_Rsp_Generator_Admin {
         }
     }
 
-    private function is_rule_amount_valid($rule_amount_value, $price_match)
+    private function is_rule_amount_valid($rule_amount_value, $rule_amount_value_pound, $price_match, $price_match_fa)
     {
-        $validated = sanitize_text_field($rule_amount_value);
-        if($validated!==$rule_amount_value || !is_numeric($validated) || $validated <= 0 || $validated >= 100 ){
+        if($price_match==='yes'){ // Here if Price matched is ticked - we aren't worried about any values for PC or Amount only fixed amount to add to Price match
+            $validated_price_match_fa = sanitize_text_field($price_match_fa);
+            if(empty($price_match_fa)){
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $price_match
+                ];
+            }else if($validated_price_match_fa===$price_match_fa && is_numeric($price_match_fa) && $price_match_fa > 0 && $price_match_fa < 100){
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $price_match
+                ];
+            }else{
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Validation failed</strong> - please enter a valid fixed amount to add to price match')
+                ];
+            }
+
+        }
+
+        $validated_pc = sanitize_text_field($rule_amount_value);
+        $validated_pound = sanitize_text_field($rule_amount_value_pound);
+        if(!empty($rule_amount_value)){
+            if($validated_pc===$rule_amount_value && is_numeric($validated_pc) && $validated_pc > 0 && $validated_pc < 100){
+                return (object)[
+                    'is_valid' => true,
+                    'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                    'value' => $validated_pc
+                ];
+            }else{
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Validation failed</strong> - please enter a valid percentage amount')
+                ];
+            }
+        }else{
+            if(!empty($validated_pound)){
+                if($validated_pound===$rule_amount_value_pound && is_numeric($validated_pound) && $validated_pound > 0){
+                    return (object)[
+                        'is_valid' => true,
+                        'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
+                        'value' => $validated_pound
+                    ];
+                }else{
+                    return (object)[
+                        'is_valid' => false,
+                        'message' => urlencode('<strong>Validation failed</strong> - please enter a valid amount')
+                    ];
+                }
+            }else{
+                return (object)[
+                    'is_valid' => false,
+                    'message' => urlencode('<strong>Validation failed</strong> - please enter a valid percentage or amount')
+                ];
+            }
+        }
+        /*if($validated_pc!==$rule_amount_value || !is_numeric($validated_pc) || $validated_pc <= 0 || $validated_pc >= 100 ){
             if($price_match==='yes'){
                 return (object)[
                     'is_valid' => true,
@@ -474,10 +542,10 @@ class Fbf_Rsp_Generator_Admin {
                 return (object)[
                     'is_valid' => true,
                     'message' => urlencode('<strong>Rule added</strong> - here is where we will add the rule'),
-                    'value' => $validated
+                    'value' => $validated_pc
                 ];
             }
-        }
+        }*/
     }
 
     /**
@@ -514,9 +582,23 @@ class Fbf_Rsp_Generator_Admin {
                         $html.= '<td style="text-align: center;">Any</td>';
                     }
                 }
-
-                $html.= sprintf('<td style="text-align: center;">%s</td>', $row->price_match?'Yes':'-');
-                $html.= sprintf('<td style="text-align: center;">%s</td>', !empty($row->amount)?esc_attr($row->amount):'-');
+                $price_match_addition = '';
+                if($row->price_match){
+                    if($row->price_match_addition){
+                        $price_match_addition = ' (+ &pound;' . $row->price_match_addition . ')';
+                    }
+                }
+                if($row->amount){
+                    if($row->is_pc){
+                        $amt = esc_attr($row->amount) . '%';
+                    }else{
+                        $amt = '&pound;' . esc_attr($row->amount);
+                    }
+                }else{
+                    $amt = '-';
+                }
+                $html.= sprintf('<td style="text-align: center;">%s</td>', $row->price_match?'Yes'.$price_match_addition:'-');
+                $html.= sprintf('<td style="text-align: center;">%s</td>', $amt);
                 $html.= sprintf('<td><form action="%s" method="post" class="fbf-rsp-generator-delete-rule-form"><input type="hidden" name="action" value="fbf_rsp_generator_delete_rule"/><input type="hidden" name="%s" value="%s"/><button type="submit" class="no-styles fbf-rsp-generator-delete-rule">Delete</button></form></td>', admin_url('admin-post.php'), $this->option_name . '_rule_id', $row->id);
                 $html.= '</tr>';
             }
