@@ -20,6 +20,7 @@
  * @subpackage Fbf_Rsp_Generator/admin
  * @author     Kevin Price-Ward <kevin.price-ward@chapteragency.com>
  */
+#[\AllowDynamicProperties]
 class Fbf_Rsp_Generator_Admin {
 
 	/**
