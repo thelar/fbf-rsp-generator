@@ -324,7 +324,7 @@ class Fbf_Rsp_Generator_Admin {
     {
         global $wpdb;
         $is_rule_name_valid = $this->is_rule_name_valid($_REQUEST[$this->option_name . '_rule_name']);
-        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount'], $_REQUEST[$this->option_name . '_rule_amount_pound'], $_REQUEST[$this->option_name . '_price_match'], $_REQUEST[$this->option_name . '_price_match_addition']);
+        $is_rule_amount_valid = $this->is_rule_amount_valid($_REQUEST[$this->option_name . '_rule_amount']??null, $_REQUEST[$this->option_name . '_rule_amount_pound']??null, $_REQUEST[$this->option_name . '_price_match']??null, $_REQUEST[$this->option_name . '_price_match_addition']??null);
         foreach($this->taxonomies as $tax){
             $val = $_REQUEST[$this->option_name . '_rule_tax_' . $tax];
             if(isset($val) && !empty($val)){
