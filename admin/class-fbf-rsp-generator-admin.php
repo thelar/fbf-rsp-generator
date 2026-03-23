@@ -57,7 +57,7 @@ class Fbf_Rsp_Generator_Admin {
      * @access private
      * @var array
      */
-    private $taxonomies = ['pa_tyre-type', 'pa_tyre-size', 'pa_tyre-profile', 'pa_tyre-width', 'pa_brand-name', 'pa_model-name'];
+    private $taxonomies = ['product_cat', 'pa_tyre-type', 'pa_tyre-size', 'pa_tyre-profile', 'pa_tyre-width', 'pa_brand-name', 'pa_model-name'];
 
 	/**
 	 * Initialize the class and set its properties.
